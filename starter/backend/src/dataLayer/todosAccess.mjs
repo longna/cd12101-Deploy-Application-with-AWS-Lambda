@@ -13,8 +13,7 @@ export class TodosAccess {
   constructor(
     dynamoDb = new DynamoDB(),
     dynamoDbXRay = AWSXRay.captureAWSv3Client(dynamoDb),
-    todosTable = process.env.TODOS_TABLE,
-    todosIndex = process.env.TODOS_CREATED_AT_INDEX
+    todosTable = process.env.TODOS_TABLE
   ) {
     this.todosTable = todosTable
     this.dynamoDbClient = DynamoDBDocument.from(dynamoDbXRay)
@@ -22,42 +21,35 @@ export class TodosAccess {
   }
 
   async getTodosForUser(userId) {
-    console.log(userId)
-
-    const scanCommand = {
-      TableName: this.todosTable,
-      KeyConditionExpression: 'userId = :userId',
-      ExpressionAttributeValues: {
-        ':userId': userId
-      }
-    }
-    const result = await this.dynamoDbClient.query(scanCommand)
+    const result = await this.dynamoDbClient.query({
+        TableName: this.todosTable,
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': userId
+        }
+      })
 
     return result.Items
   }
 
   async getTodoById(userId, todoId) {
-    const getTodoCommand = {
-      TableName: this.todosTable,
-      KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
-      ExpressionAttributeValues: {
-        ':userId': userId,
-        ':todoId': todoId
-      }
-    }
-    const result = await this.dynamoDbClient.query(getTodoCommand)
+    const result = await this.dynamoDbClient.query({
+        TableName: this.todosTable,
+        KeyConditionExpression: 'userId = :userId AND todoId = :todoId',
+        ExpressionAttributeValues: {
+          ':userId': userId,
+          ':todoId': todoId
+        }
+      })
 
     return result.Items[0]
   }
 
   async createTodo(newTodo) {
-
-    const putItemCommand = {
-      TableName: this.todosTable,
-      Item: newTodo
-    }
-
-    const result = await this.dynamoDbClient.put(putItemCommand)
+    await this.dynamoDbClient.put({
+        TableName: this.todosTable,
+        Item: newTodo
+      })
 
     return newTodo
   }
@@ -66,61 +58,57 @@ export class TodosAccess {
 
     const todoItem = await this.getTodoById(userId, todoId)
     if (!todoItem) {
-      throw new Error(`Todo item ${todoId} not found`)
+      throw new Error(`Todo item with id ${todoId} not exist`)
     }
 
-    const putItemCommand = {
+    const updateTodoCommand = {
       TableName: this.todosTable,
       Key: {
           userId: userId,
           todoId: todoId
       },
-      UpdateExpression: 'SET #itemname = :itemname, dueDate = :dueDate, done = :done',
+      UpdateExpression: 'SET dueDate = :dueDate, #itemname = :itemname, done = :done',
       ExpressionAttributeNames: {
           '#itemname': 'name'
       },
       ExpressionAttributeValues: {
-          ':itemname': updateTodo.name,
           ':dueDate': updateTodo.dueDate,
+          ':itemname': updateTodo.name,
           ':done': updateTodo.done
       }
   }
 
-    await this.dynamoDbClient.update(putItemCommand)
+    await this.dynamoDbClient.update(updateTodoCommand)
   }
 
   async updateTodoImageUrl(userId, todoId, imageUrl) {
     const todoItem = await this.getTodoById(userId, todoId)
 
     if (!todoItem) {
-      throw new Error(`Todo item ${todoId} not found`)
+        throw new Error(`Todo item with id ${todoId} not exist`)
     }
 
-    const updateImageCommnad = {
-      TableName: this.todosTable,
-      Key: {
-        userId: userId,
-        todoId: todoId
-      },
-      UpdateExpression: 'SET attachmentUrl = :attachmentUrl',
-      ExpressionAttributeValues: {
-        ':attachmentUrl': imageUrl
-      }
-    }
-
-    await this.dynamoDbClient.update(updateImageCommnad)
+    await this.dynamoDbClient.update({
+        TableName: this.todosTable,
+        Key: {
+          userId: userId,
+          todoId: todoId
+        },
+        UpdateExpression: 'SET attachmentUrl = :attachmentUrl',
+        ExpressionAttributeValues: {
+          ':attachmentUrl': imageUrl
+        }
+      })
   }
 
   async deleteTodo(userId, todoId) {
 
-    const deleteItemCommand = {
-      TableName: this.todosTable,
-      Key: {
-        userId,
-        todoId
-      }
-    }
-
-    await this.dynamoDbClient.delete(deleteItemCommand)
+    await this.dynamoDbClient.delete({
+        TableName: this.todosTable,
+        Key: {
+          userId,
+          todoId
+        }
+      })
   }
 }

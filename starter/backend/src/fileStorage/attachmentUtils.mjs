@@ -8,14 +8,15 @@ export async function createPresignedUrl(imageId) {
 
     const s3Client = new S3Client()
     
-    const command = new PutObjectCommand({
+    const putObjectCommand = new PutObjectCommand({
         Bucket: s3_bucket,
         Key: imageId
       })
-      const url = await getPreSignedUrl(s3Client, command, {
-        expiresIn: 300
+
+      const imageUrl = await getPreSignedUrl(s3Client, putObjectCommand, {
+        expiresIn: 500
       })
 
-      return url
+      return imageUrl
 
 }

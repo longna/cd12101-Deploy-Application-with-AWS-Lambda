@@ -10,16 +10,14 @@ export async function getTodos(userId) {
 }
 
 export async function createTodo(userId, newTodo) {
-    const id = uuid.v4()
-    const createdAt = new Date().toISOString()
-
+    const todoId = uuid.v4()
 
     return todosAccess.createTodo({
-        todoId: id,
+        todoId: todoId,
         userId: userId,
-        createdAt: new Date().toISOString(),
         name: newTodo.name,
         dueDate: newTodo.dueDate,
+        createdAt: new Date().toISOString(),
         done: false
     });
 }
@@ -29,10 +27,10 @@ export async function updateTodo(userId, todoId, updateTodo) {
 }
 
 export async function updateTodoImageUrl (userId, todoId, imageId) {
-
-    const imageUrl  = `https://${s3_bucket}.s3.${AWS_REGION}.amazonaws.com/${imageId}`
-
-    return todosAccess.updateTodoImageUrl(userId, todoId, imageUrl)
+    return todosAccess.updateTodoImageUrl(
+        userId, 
+        todoId, 
+        `https://${s3_bucket}.s3.${AWS_REGION}.amazonaws.com/${imageId}`)
 }
 
 export async function deleteTodo(userId, todoId) {
