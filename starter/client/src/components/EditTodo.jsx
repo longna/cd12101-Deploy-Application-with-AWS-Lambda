@@ -40,10 +40,10 @@ export function EditTodo() {
         alert('File should be selected')
         return
       }
-
+      
       setUploadState(UploadState.FetchingPresignedUrl)
       const accessToken = await getAccessTokenSilently({
-        audience: `https://test-endpoint.auth0.com/api/v2/`,
+        audience: `https://dev-0tpbr2leyjmvypru.us.auth0.com/api/v2/`,
         scope: 'write:todos'
       })
       const uploadUrl = await getUploadUrl(accessToken, todoId)
